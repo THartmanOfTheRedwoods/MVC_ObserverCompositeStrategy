@@ -1,6 +1,9 @@
 public class JSONViewStrategy implements ViewStrategy {
     @Override
     public void renderLeaf(String content, HttpResponse response) {
+        if(!response.getBody().endsWith("[")) {
+            response.appendToBody(",");
+        }
         response.appendToBody("\"" + content + "\"");
     }
 

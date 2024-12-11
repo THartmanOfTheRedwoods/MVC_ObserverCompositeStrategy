@@ -6,6 +6,12 @@ public class Leaf implements Component {
     }
 
     @Override
+    public void add(Component component) { } // Dummy method used for Composite, but meaningless to leaf classes
+
+    @Override
+    public void remove(Component component) { } // Dummy method used for Composite, but meaningless to leaf classes
+
+    @Override
     public void render(ViewStrategy strategy, HttpResponse response) {
         strategy.renderLeaf(content, response);
     }
