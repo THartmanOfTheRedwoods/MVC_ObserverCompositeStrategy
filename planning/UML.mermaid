@@ -1,0 +1,111 @@
+classDiagram
+    class Subject {
+<<Subject interface ObserverPattern>>
++ register(Observer observer): void
++ unregister(Observer observer): void
++ notifyObservers(): void
++ getState(): Object
++ setState(Object state): void
+}
+
+class ConcreteSubject {
+<<ObserverPattern>>
+- List~Observer~ observers
+- Object state
++ register(Observer observer): void "observers.add(observer)"
++ unregister(Observer observer): void
++ notifyObservers(): void "for o in observers: o.update()"
++ getState(): Object
++ setState(Object state): void
+}
+
+class Observer {
+<<Observer interface ObserverPattern>>
++ update(): void
++ setSubject(Subject subject): void
+}
+
+class ConcreteObserver {
+<<ObserverPattern>>
+- Subject subject "Model we're observing"
+- Component viewRoot "View for whole page."
+- Controller controller "Strategy to delegate rendering to"
++ update(): void "this.renderView()"
++ setSubject(Subject subject): void
+- renderView(): void "viewRoot.add(new Component()), controller.renderView(viewRoot)"
+}
+
+class Component {
+<<interface CompositePattern>>
++ add(Component component)
++ remove(Component component)
++ render(ViewStrategy strategy, HttpResponse response): void
+}
+
+class Leaf {
+<<CompositePattern>>
++ add(Component component)
++ remove(Component component)
++ render(ViewStrategy strategy, HttpResponse response): void "Apply strategy to render leaf component."
+}
+
+class Composite {
+<<CompositePattern>>
+- List~Component~ children
++ add(Component component): void
++ remove(Component component): void
++ getChildren(): List~Component~
++ render(ViewStrategy strategy, HttpResponse response): void "Apply strategy to render composite component and child components."
+}
+
+class ViewStrategy {
+<<interface StrategyPattern>>
++ renderLeaf(String content, HttpResponse response): void
++ renderCompositeStart(HttpResponse response): void "Called by Component of Composite Pattern"
++ renderCompositeEnd(HttpResponse response): void
+}
+
+class HTMLViewStrategy {
+<<ViewStrategy>>
++ renderLeaf(String content, HttpResponse response): void
++ renderCompositeStart(HttpResponse response): void
++ renderCompositeEnd(HttpResponse response): void
+}
+
+class JSONViewStrategy {
+<<ViewStrategy>>
++ renderLeaf(String content, HttpResponse response) void
++ renderCompositeStart(HttpResponse response) void
++ renderCompositeEnd(HttpResponse response) void
+}
+
+class Router {
+<<Client>>
++ routeRequest(HttpRequest request, HttpResponse response): void
+}
+
+class Controller {
+<<Context StrategyPattern>>
+- ViewStrategy strategy
+- HttpResponse response
++ setViewStrategy(ViewStrategy strategy): void
++ renderView(Component view, HttpResponse response): void
+}
+
+Router --> Controller : "1. Creates and later sets Strategy Context/Controller"
+Router --> Subject : "2. Creates the Model/Observer Subject and later triggers model state change."
+Router --> Component : "3. Creates viewRoot Composite component"
+Router --> ConcreteObserver : "4. Links Model-Observer to rootView and Controller"
+Controller *--> ViewStrategy : "5. UI -> ViewStrategy -> later delegates rendering to Component and Strategy"
+ConcreteObserver *--> Component : "6. Observer linked with viewRoot so model driven changes can be rendered."
+ConcreteObserver *--> Controller : "7. On Model update, adds child view content, then delegates to controller.renderView"
+Controller --> Component : "8. on renderView delegates to viewRoot.render()"
+Component --> ViewStrategy : "9. Applies view Strategy to aid rendering"
+Composite *-- Component : "10. on render uses strategy to render, then delegates to children.render(strategy, response)"
+Subject <|-- ConcreteSubject : "implements Subject Interface"
+ConcreteSubject *-- Observer : "Maintains list of observers, registered by client Router"
+Observer <|-- ConcreteObserver: "Implements Observer Interface"
+Component <|-- Composite: "Implements Component Interface and Maintains list of child components"
+Component <|-- Leaf: "Implements Component Interface"
+ViewStrategy <|-- HTMLViewStrategy: "Concrete Strategy to render model data as HTML"
+ViewStrategy <|-- JSONViewStrategy: "Concrete Strategy to render model data as JSON"

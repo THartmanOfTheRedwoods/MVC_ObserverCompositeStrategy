@@ -1,6 +1,6 @@
 public class Controller {
     private ViewStrategy viewStrategy;
-    private HttpResponse response;
+    private final HttpResponse response;
 
     public Controller(HttpResponse response) {
         this.response = response;
@@ -14,6 +14,7 @@ public class Controller {
         if (viewStrategy == null) {
             throw new IllegalStateException("No ViewStrategy set");
         }
+        // Delegates to passed in parameter "view" with strategy to render the view into the response.
         view.render(viewStrategy, response);
     }
 }

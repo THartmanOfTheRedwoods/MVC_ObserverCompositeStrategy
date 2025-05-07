@@ -2,12 +2,12 @@ public class Router {
     public void routeRequest(HttpRequest request, HttpResponse response) {
         Controller controller = new Controller(response); // The client creates the Strategy Context
         // The Model (or Observer Subject) for the Strategy renderer is also created.
-        ConcreteSubject model = new ConcreteSubject();
+        Subject model = new ConcreteSubject();
 
         // Build Composite Application View
         // The root view, which is a Composite Pattern for the whole page is also created.
         // This will be the same for every route request.
-        Composite rootView = new Composite();
+        Component rootView = new Composite();
         rootView.add(new Leaf("Welcome to our website!"));
         rootView.add(new Leaf("Here is some content."));
 
@@ -19,7 +19,7 @@ public class Router {
         }
 
         // The Observer(View) is linked to the root Composite Application View so it can be rendered
-        ConcreteObserver observer = new ConcreteObserver(rootView, controller);
+        Observer observer = new ConcreteObserver(rootView, controller);
         observer.setSubject(model);
         model.register(observer);
 
