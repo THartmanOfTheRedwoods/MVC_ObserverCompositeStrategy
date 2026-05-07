@@ -1,30 +1,37 @@
+import com.sun.net.httpserver.HttpExchange;
+import java.io.IOException;
+
 public class Router {
-    public void routeRequest(HttpRequest request, HttpResponse response) {
-        Controller controller = new Controller(response); // The client creates the Strategy Context
-        // The Model (or Observer Subject) for the Strategy renderer is also created.
+    public void routeRequest(HttpExchange exchange) throws IOException {
+        HttpRequest request = new HttpRequest(exchange);
+        HttpResponse response = new HttpResponse(exchange);
+
+        Controller controller = new Controller(response);
         Subject model = new ConcreteSubject();
 
-        // Build Composite Application View
-        // The root view, which is a Composite Pattern for the whole page is also created.
-        // This will be the same for every route request.
+        // Build Composite Application View — unchanged
         Component rootView = new Composite();
         rootView.add(new Leaf("Welcome to our website!"));
         rootView.add(new Leaf("Here is some content."));
 
-        // Based on user input, a strategy for rendering the view is chosen and set in the Controller(Strategy Context)
+        // Choose strategy based on Accept header, and set the matching Content-Type
         if ("application/json".equals(request.getHeader("Accept"))) {
             controller.setViewStrategy(new JSONViewStrategy());
+            response.setContentType("application/json; charset=UTF-8");
         } else {
             controller.setViewStrategy(new HTMLViewStrategy());
+            response.setContentType("text/html; charset=UTF-8");
         }
 
-        // The Observer(View) is linked to the root Composite Application View so it can be rendered
+        // Wire Observer — unchanged
         Observer observer = new ConcreteObserver(rootView, controller);
         observer.setSubject(model);
         model.register(observer);
 
-        // Trigger model updates
+        // Trigger model update → notifies observer → controller renders view into response
         model.setState("New State");
-        // Observer will automatically render the view through the controller upon notification
+
+        // NOW flush the buffered response body to the real HTTP connection
+        response.send();
     }
 }

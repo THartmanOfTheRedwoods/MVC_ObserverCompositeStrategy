@@ -1,15 +1,14 @@
-import java.util.HashMap;
-import java.util.Map;
+import com.sun.net.httpserver.HttpExchange;
 
 public class HttpRequest {
-    private Map<String, String> headers;
+    private final HttpExchange exchange;
 
-    public HttpRequest(String acceptHeader) {
-        headers = new HashMap<>();
-        headers.put("Accept", acceptHeader);
+    public HttpRequest(HttpExchange exchange) {
+        this.exchange = exchange;
     }
 
     public String getHeader(String name) {
-        return headers.get(name);
+        // getFirst() handles the case where a header is absent, returning null
+        return exchange.getRequestHeaders().getFirst(name);
     }
 }
