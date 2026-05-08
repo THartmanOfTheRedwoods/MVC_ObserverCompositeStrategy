@@ -5,12 +5,12 @@ public class HTMLViewStrategy implements ViewStrategy {
     }
 
     @Override
-    public void renderCompositeStart(HttpResponse response) {
+    public void renderCompositeStart(Component component, HttpResponse response) {
         response.appendToBody("<div>");
     }
 
     @Override
-    public void renderCompositeEnd(HttpResponse response) {
+    public void renderCompositeEnd(Component component, HttpResponse response) {
         response.appendToBody("</div>");
     }
 }

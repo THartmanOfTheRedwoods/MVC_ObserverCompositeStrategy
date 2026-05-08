@@ -1,37 +1,27 @@
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Router {
+    private final Map<String, RouteHandler> routes = new LinkedHashMap<>();
+
+    public void register(String path, RouteHandler handler) {
+        routes.put(path, handler);
+    }
+
     public void routeRequest(HttpExchange exchange) throws IOException {
-        HttpRequest request = new HttpRequest(exchange);
-        HttpResponse response = new HttpResponse(exchange);
+        String path = exchange.getRequestURI().getPath();
+        RouteHandler handler = routes.get(path);
 
-        Controller controller = new Controller(response);
-        Subject model = new ConcreteSubject();
-
-        // Build Composite Application View — unchanged
-        Component rootView = new Composite();
-        rootView.add(new Leaf("Welcome to our website!"));
-        rootView.add(new Leaf("Here is some content."));
-
-        // Choose strategy based on Accept header, and set the matching Content-Type
-        if ("application/json".equals(request.getHeader("Accept"))) {
-            controller.setViewStrategy(new JSONViewStrategy());
-            response.setContentType("application/json; charset=UTF-8");
+        if (handler != null) {
+            handler.handle(exchange);
         } else {
-            controller.setViewStrategy(new HTMLViewStrategy());
-            response.setContentType("text/html; charset=UTF-8");
+            byte[] body = ("404 Not Found: " + path).getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(404, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.getResponseBody().close();
         }
-
-        // Wire Observer — unchanged
-        Observer observer = new ConcreteObserver(rootView, controller);
-        observer.setSubject(model);
-        model.register(observer);
-
-        // Trigger model update → notifies observer → controller renders view into response
-        model.setState("New State");
-
-        // NOW flush the buffered response body to the real HTTP connection
-        response.send();
     }
 }

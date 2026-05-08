@@ -3,17 +3,17 @@ import java.net.InetSocketAddress;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        int port = 8080;
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        Router router = new Router();
+        router.register("/", new HomeHandler());
+        router.register("/users", new UsersHandler());
+        // router.register("/products", new ProductsHandler()); // adding routes stays this simple
 
-        server.createContext("/", exchange -> {
-            Router router = new Router();
-            router.routeRequest(exchange);
-        });
-
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        server.createContext("/", exchange -> router.routeRequest(exchange));
         server.start();
-        System.out.println("Server running on http://localhost:" + port);
-        System.out.println("Try: curl -H 'Accept: application/json' http://localhost:8080/");
-        System.out.println("Try: curl http://localhost:8080/");
+
+        System.out.println("Server running on http://localhost:8080");
+        System.out.println("curl http://localhost:8080/");
+        System.out.println("curl -H 'Accept: application/json' http://localhost:8080/users");
     }
 }

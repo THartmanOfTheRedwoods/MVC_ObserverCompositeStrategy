@@ -15,4 +15,13 @@ public class Leaf implements Component {
     public void render(ViewStrategy strategy, HttpResponse response) {
         strategy.renderLeaf(content, response);
     }
+
+    @Override
+    public String getName() {
+        return "";
+    }
+
+    @Override
+    public void setName(String set) { }
+
 }
