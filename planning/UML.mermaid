@@ -1,180 +1,168 @@
 classDiagram
-    direction TB
+direction TB
 
 %% ═══════════════════════════════════════════════════════════════
-%%  STYLE DEFINITIONS
-%%  Pattern colors: gray=infra, purple=Template Method,
-%%  green=Strategy, blue=Composite, amber=Observer
+%%  INFRASTRUCTURE
 %% ═══════════════════════════════════════════════════════════════
 
-classDef infraDef     fill:#f3f4f6,stroke:#6b7280,color:#1f2937
-classDef templateDef  fill:#ede9fe,stroke:#7c3aed,color:#3b0764
-classDef strategyDef  fill:#d1fae5,stroke:#065f46,color:#022c22
-classDef compositeDef fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
-classDef observerDef  fill:#fef3c7,stroke:#b45309,color:#451a03
-
-%% ═══════════════════════════════════════════════════════════════
-%%  INFRASTRUCTURE  (gray)
-%% ═══════════════════════════════════════════════════════════════
-
-class Main:::infraDef {
-+main(args) void
+class Main {
+    +main(args) void
 }
 
-class Router:::infraDef {
--routes Map~String, RouteHandler~
-+register(path, handler) void
-+routeRequest(exchange) void
+class Router {
+    -routes Map~String, RouteHandler~
+    +register(path, handler) void
+    +routeRequest(exchange) void
 }
 
-class HttpRequest:::infraDef {
--exchange HttpExchange
-+getHeader(name) String
+class HttpRequest {
+    -exchange HttpExchange
+    +getHeader(name) String
 }
 
-class HttpResponse:::infraDef {
--exchange HttpExchange
--body StringBuilder
--contentType String
-+appendToBody(content) void
-+getBody() String
-+setContentType(type) void
-+send() void
+class HttpResponse {
+    -exchange HttpExchange
+    -body StringBuilder
+    -contentType String
+    +appendToBody(content) void
+    +getBody() String
+    +setContentType(type) void
+    +send() void
 }
 
 %% ═══════════════════════════════════════════════════════════════
-%%  TEMPLATE METHOD PATTERN  (purple) — MVC Controller layer
+%%  TEMPLATE METHOD PATTERN — MVC Controller layer
 %%  handle() is the invariant skeleton.
 %%  createModel / buildView / handleRequest are subclass hot-spots.
 %% ═══════════════════════════════════════════════════════════════
 
-class RouteHandler:::templateDef {
-<<interface>>
-+handle(exchange) void
+class RouteHandler {
+    <<interface>>
+    +handle(exchange) void
 }
 
-class BaseRouteHandler:::templateDef {
-<<abstract>>
-+handle(exchange) void
-#createModel() Subject*
-#buildView() Component*
-#handleRequest(request, model) void*
+class BaseRouteHandler {
+    <<abstract>>
+    +handle(exchange) void
+    #createModel() Subject*
+    #buildView() Component*
+    #handleRequest(request, model) void*
 }
 
-class HomeHandler:::templateDef {
-#createModel() Subject
-#buildView() Component
-#handleRequest(request, model) void
+class HomeHandler {
+    #createModel() Subject
+    #buildView() Component
+    #handleRequest(request, model) void
 }
 
-class UsersHandler:::templateDef {
-#createModel() Subject
-#buildView() Component
-#handleRequest(request, model) void
+class UsersHandler {
+    #createModel() Subject
+    #buildView() Component
+    #handleRequest(request, model) void
 }
 
 %% ═══════════════════════════════════════════════════════════════
-%%  STRATEGY PATTERN  (green) — MVC View rendering layer
+%%  STRATEGY PATTERN — MVC View rendering layer
 %%  Controller is the Context. ViewStrategy is the Strategy.
 %% ═══════════════════════════════════════════════════════════════
 
-class Controller:::strategyDef {
--viewStrategy ViewStrategy
--response HttpResponse
-+setViewStrategy(strategy) void
-+renderView(view) void
+class Controller {
+    -viewStrategy ViewStrategy
+    -response HttpResponse
+    +setViewStrategy(strategy) void
+    +renderView(view) void
 }
 
-class ViewStrategy:::strategyDef {
-<<interface>>
-+renderLeaf(content, response) void
-+renderCompositeStart(component, response) void
-+renderCompositeEnd(component, response) void
+class ViewStrategy {
+    <<interface>>
+    +renderLeaf(content, response) void
+    +renderCompositeStart(component, response) void
+    +renderCompositeEnd(component, response) void
 }
 
-class HTMLViewStrategy:::strategyDef {
-+renderLeaf(content, response) void
-+renderCompositeStart(component, response) void
-+renderCompositeEnd(component, response) void
+class HTMLViewStrategy {
+    +renderLeaf(content, response) void
+    +renderCompositeStart(component, response) void
+    +renderCompositeEnd(component, response) void
 }
 
-class JSONViewStrategy:::strategyDef {
-+renderLeaf(content, response) void
-+renderCompositeStart(component, response) void
-+renderCompositeEnd(component, response) void
+class JSONViewStrategy {
+    +renderLeaf(content, response) void
+    +renderCompositeStart(component, response) void
+    +renderCompositeEnd(component, response) void
 }
 
 %% ═══════════════════════════════════════════════════════════════
-%%  COMPOSITE PATTERN  (blue) — MVC View structure
+%%  COMPOSITE PATTERN — MVC View structure
 %%  Composite branches; Leaf terminates.
 %%  Both delegate rendering to the chosen ViewStrategy.
 %% ═══════════════════════════════════════════════════════════════
 
-class Component:::compositeDef {
-<<interface>>
-+getName() String
-+setName(name) void
-+add(component) void
-+remove(component) void
-+render(strategy, response) void
+class Component {
+    <<interface>>
+    +getName() String
+    +setName(name) void
+    +add(component) void
+    +remove(component) void
+    +render(strategy, response) void
 }
 
-class Composite:::compositeDef {
--children List~Component~
--name String
-+add(component) void
-+remove(component) void
-+render(strategy, response) void
-+getName() String
-+setName(name) void
+class Composite {
+    -children List~Component~
+    -name String
+    +add(component) void
+    +remove(component) void
+    +render(strategy, response) void
+    +getName() String
+    +setName(name) void
 }
 
-class Leaf:::compositeDef {
--content String
-+add(component) void
-+remove(component) void
-+render(strategy, response) void
-+getName() String
-+setName(name) void
+class Leaf {
+    -content String
+    +add(component) void
+    +remove(component) void
+    +render(strategy, response) void
+    +getName() String
+    +setName(name) void
 }
 
 %% ═══════════════════════════════════════════════════════════════
-%%  OBSERVER PATTERN  (amber) — MVC Model-View bridge
+%%  OBSERVER PATTERN — MVC Model-View bridge
 %%  Subject is the Model. ConcreteObserver listens, then re-renders.
 %% ═══════════════════════════════════════════════════════════════
 
-class Subject:::observerDef {
-<<interface>>
-+register(observer) void
-+unregister(observer) void
-+notifyObservers() void
-+getState() Object
-+setState(state) void
+class Subject {
+    <<interface>>
+    +register(observer) void
+    +unregister(observer) void
+    +notifyObservers() void
+    +getState() Object
+    +setState(state) void
 }
 
-class ConcreteSubject:::observerDef {
--observers List~Observer~
--state Object
-+register(observer) void
-+unregister(observer) void
-+notifyObservers() void
-+getState() Object
-+setState(state) void
+class ConcreteSubject {
+    -observers List~Observer~
+    -state Object
+    +register(observer) void
+    +unregister(observer) void
+    +notifyObservers() void
+    +getState() Object
+    +setState(state) void
 }
 
-class Observer:::observerDef {
-<<interface>>
-+update() void
-+setSubject(subject) void
+class Observer {
+    <<interface>>
+    +update() void
+    +setSubject(subject) void
 }
 
-class ConcreteObserver:::observerDef {
--subject Subject
--viewRoot Component
--controller Controller
-+update() void
-+setSubject(subject) void
--renderView() void
+class ConcreteObserver {
+    -subject Subject
+    -viewRoot Component
+    -controller Controller
+    +update() void
+    +setSubject(subject) void
+    -renderView() void
 }
 
 %% ═══════════════════════════════════════════════════════════════
@@ -210,3 +198,36 @@ Observer <|.. ConcreteObserver
 ConcreteSubject --> Observer  : "8. notifyObservers"
 ConcreteObserver --> Component  : "9. adds dynamic view nodes"
 ConcreteObserver --> Controller : "10. calls renderView"
+
+%% ═══════════════════════════════════════════════════════════════
+%%  PER-CLASS STYLE DIRECTIVES (Mermaid v10+ compatible)
+%%    gray   = infrastructure
+%%    green  = Template Method
+%%    blue   = Strategy
+%%    pink   = Composite
+%%    yellow = Observer
+%% ═══════════════════════════════════════════════════════════════
+
+style Main         fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+style Router       fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+style HttpRequest  fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+style HttpResponse fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+
+style RouteHandler     fill:#d1fae5,stroke:#065f46,color:#022c22
+style BaseRouteHandler fill:#d1fae5,stroke:#065f46,color:#022c22
+style HomeHandler      fill:#d1fae5,stroke:#065f46,color:#022c22
+style UsersHandler     fill:#d1fae5,stroke:#065f46,color:#022c22
+
+style Controller       fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+style ViewStrategy     fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+style HTMLViewStrategy fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+style JSONViewStrategy fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+
+style Component fill:#fce7f3,stroke:#be185d,color:#500724
+style Composite fill:#fce7f3,stroke:#be185d,color:#500724
+style Leaf      fill:#fce7f3,stroke:#be185d,color:#500724
+
+style Subject          fill:#fef9c3,stroke:#a16207,color:#422006
+style ConcreteSubject  fill:#fef9c3,stroke:#a16207,color:#422006
+style Observer         fill:#fef9c3,stroke:#a16207,color:#422006
+style ConcreteObserver fill:#fef9c3,stroke:#a16207,color:#422006
