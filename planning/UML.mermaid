@@ -1,111 +1,212 @@
 classDiagram
-    class Subject {
-<<Subject interface ObserverPattern>>
-+ register(Observer observer): void
-+ unregister(Observer observer): void
-+ notifyObservers(): void
-+ getState(): Object
-+ setState(Object state): void
+    direction TB
+
+%% ═══════════════════════════════════════════════════════════════
+%%  STYLE DEFINITIONS
+%%  Pattern colors: gray=infra, purple=Template Method,
+%%  green=Strategy, blue=Composite, amber=Observer
+%% ═══════════════════════════════════════════════════════════════
+
+classDef infraDef     fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+classDef templateDef  fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+classDef strategyDef  fill:#d1fae5,stroke:#065f46,color:#022c22
+classDef compositeDef fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+classDef observerDef  fill:#fef3c7,stroke:#b45309,color:#451a03
+
+%% ═══════════════════════════════════════════════════════════════
+%%  INFRASTRUCTURE  (gray)
+%% ═══════════════════════════════════════════════════════════════
+
+class Main:::infraDef {
++main(args) void
 }
 
-class ConcreteSubject {
-<<ObserverPattern>>
-- List~Observer~ observers
-- Object state
-+ register(Observer observer): void "observers.add(observer)"
-+ unregister(Observer observer): void
-+ notifyObservers(): void "for o in observers: o.update()"
-+ getState(): Object
-+ setState(Object state): void
+class Router:::infraDef {
+-routes Map~String, RouteHandler~
++register(path, handler) void
++routeRequest(exchange) void
 }
 
-class Observer {
-<<Observer interface ObserverPattern>>
-+ update(): void
-+ setSubject(Subject subject): void
+class HttpRequest:::infraDef {
+-exchange HttpExchange
++getHeader(name) String
 }
 
-class ConcreteObserver {
-<<ObserverPattern>>
-- Subject subject "Model we're observing"
-- Component viewRoot "View for whole page."
-- Controller controller "Strategy to delegate rendering to"
-+ update(): void "this.renderView()"
-+ setSubject(Subject subject): void
-- renderView(): void "viewRoot.add(new Component()), controller.renderView(viewRoot)"
+class HttpResponse:::infraDef {
+-exchange HttpExchange
+-body StringBuilder
+-contentType String
++appendToBody(content) void
++getBody() String
++setContentType(type) void
++send() void
 }
 
-class Component {
-<<interface CompositePattern>>
-+ add(Component component)
-+ remove(Component component)
-+ render(ViewStrategy strategy, HttpResponse response): void
+%% ═══════════════════════════════════════════════════════════════
+%%  TEMPLATE METHOD PATTERN  (purple) — MVC Controller layer
+%%  handle() is the invariant skeleton.
+%%  createModel / buildView / handleRequest are subclass hot-spots.
+%% ═══════════════════════════════════════════════════════════════
+
+class RouteHandler:::templateDef {
+<<interface>>
++handle(exchange) void
 }
 
-class Leaf {
-<<CompositePattern>>
-+ add(Component component)
-+ remove(Component component)
-+ render(ViewStrategy strategy, HttpResponse response): void "Apply strategy to render leaf component."
+class BaseRouteHandler:::templateDef {
+<<abstract>>
++handle(exchange) void
+#createModel() Subject*
+#buildView() Component*
+#handleRequest(request, model) void*
 }
 
-class Composite {
-<<CompositePattern>>
-- List~Component~ children
-+ add(Component component): void
-+ remove(Component component): void
-+ getChildren(): List~Component~
-+ render(ViewStrategy strategy, HttpResponse response): void "Apply strategy to render composite component and child components."
+class HomeHandler:::templateDef {
+#createModel() Subject
+#buildView() Component
+#handleRequest(request, model) void
 }
 
-class ViewStrategy {
-<<interface StrategyPattern>>
-+ renderLeaf(String content, HttpResponse response): void
-+ renderCompositeStart(HttpResponse response): void "Called by Component of Composite Pattern"
-+ renderCompositeEnd(HttpResponse response): void
+class UsersHandler:::templateDef {
+#createModel() Subject
+#buildView() Component
+#handleRequest(request, model) void
 }
 
-class HTMLViewStrategy {
-<<ViewStrategy>>
-+ renderLeaf(String content, HttpResponse response): void
-+ renderCompositeStart(HttpResponse response): void
-+ renderCompositeEnd(HttpResponse response): void
+%% ═══════════════════════════════════════════════════════════════
+%%  STRATEGY PATTERN  (green) — MVC View rendering layer
+%%  Controller is the Context. ViewStrategy is the Strategy.
+%% ═══════════════════════════════════════════════════════════════
+
+class Controller:::strategyDef {
+-viewStrategy ViewStrategy
+-response HttpResponse
++setViewStrategy(strategy) void
++renderView(view) void
 }
 
-class JSONViewStrategy {
-<<ViewStrategy>>
-+ renderLeaf(String content, HttpResponse response) void
-+ renderCompositeStart(HttpResponse response) void
-+ renderCompositeEnd(HttpResponse response) void
+class ViewStrategy:::strategyDef {
+<<interface>>
++renderLeaf(content, response) void
++renderCompositeStart(component, response) void
++renderCompositeEnd(component, response) void
 }
 
-class Router {
-<<Client>>
-+ routeRequest(HttpRequest request, HttpResponse response): void
+class HTMLViewStrategy:::strategyDef {
++renderLeaf(content, response) void
++renderCompositeStart(component, response) void
++renderCompositeEnd(component, response) void
 }
 
-class Controller {
-<<Context StrategyPattern>>
-- ViewStrategy strategy
-- HttpResponse response
-+ setViewStrategy(ViewStrategy strategy): void
-+ renderView(Component view, HttpResponse response): void
+class JSONViewStrategy:::strategyDef {
++renderLeaf(content, response) void
++renderCompositeStart(component, response) void
++renderCompositeEnd(component, response) void
 }
 
-Router --> Controller : "1. Creates and later sets Strategy Context/Controller"
-Router --> Subject : "2. Creates the Model/Observer Subject and later triggers model state change."
-Router --> Component : "3. Creates viewRoot Composite component"
-Router --> ConcreteObserver : "4. Links Model-Observer to rootView and Controller"
-Controller *--> ViewStrategy : "5. UI -> ViewStrategy -> later delegates rendering to Component and Strategy"
-ConcreteObserver *--> Component : "6. Observer linked with viewRoot so model driven changes can be rendered."
-ConcreteObserver *--> Controller : "7. On Model update, adds child view content, then delegates to controller.renderView"
-Controller --> Component : "8. on renderView delegates to viewRoot.render()"
-Component --> ViewStrategy : "9. Applies view Strategy to aid rendering"
-Composite *-- Component : "10. on render uses strategy to render, then delegates to children.render(strategy, response)"
-Subject <|-- ConcreteSubject : "implements Subject Interface"
-ConcreteSubject *-- Observer : "Maintains list of observers, registered by client Router"
-Observer <|-- ConcreteObserver: "Implements Observer Interface"
-Component <|-- Composite: "Implements Component Interface and Maintains list of child components"
-Component <|-- Leaf: "Implements Component Interface"
-ViewStrategy <|-- HTMLViewStrategy: "Concrete Strategy to render model data as HTML"
-ViewStrategy <|-- JSONViewStrategy: "Concrete Strategy to render model data as JSON"
+%% ═══════════════════════════════════════════════════════════════
+%%  COMPOSITE PATTERN  (blue) — MVC View structure
+%%  Composite branches; Leaf terminates.
+%%  Both delegate rendering to the chosen ViewStrategy.
+%% ═══════════════════════════════════════════════════════════════
+
+class Component:::compositeDef {
+<<interface>>
++getName() String
++setName(name) void
++add(component) void
++remove(component) void
++render(strategy, response) void
+}
+
+class Composite:::compositeDef {
+-children List~Component~
+-name String
++add(component) void
++remove(component) void
++render(strategy, response) void
++getName() String
++setName(name) void
+}
+
+class Leaf:::compositeDef {
+-content String
++add(component) void
++remove(component) void
++render(strategy, response) void
++getName() String
++setName(name) void
+}
+
+%% ═══════════════════════════════════════════════════════════════
+%%  OBSERVER PATTERN  (amber) — MVC Model-View bridge
+%%  Subject is the Model. ConcreteObserver listens, then re-renders.
+%% ═══════════════════════════════════════════════════════════════
+
+class Subject:::observerDef {
+<<interface>>
++register(observer) void
++unregister(observer) void
++notifyObservers() void
++getState() Object
++setState(state) void
+}
+
+class ConcreteSubject:::observerDef {
+-observers List~Observer~
+-state Object
++register(observer) void
++unregister(observer) void
++notifyObservers() void
++getState() Object
++setState(state) void
+}
+
+class Observer:::observerDef {
+<<interface>>
++update() void
++setSubject(subject) void
+}
+
+class ConcreteObserver:::observerDef {
+-subject Subject
+-viewRoot Component
+-controller Controller
++update() void
++setSubject(subject) void
+-renderView() void
+}
+
+%% ═══════════════════════════════════════════════════════════════
+%%  MVC FLOW  (numbered 1–12, follows one HTTP request)
+%% ═══════════════════════════════════════════════════════════════
+
+Main --> Router       : "1. registers routes"
+Router --> RouteHandler : "2. dispatches by path"
+
+RouteHandler <|.. BaseRouteHandler
+BaseRouteHandler <|-- HomeHandler
+BaseRouteHandler <|-- UsersHandler
+
+BaseRouteHandler --> HttpRequest      : "3. wraps exchange"
+BaseRouteHandler --> HttpResponse     : "3. wraps exchange"
+BaseRouteHandler --> Controller       : "4. creates Strategy context"
+BaseRouteHandler ..> Subject          : "5. createModel — MVC Model"
+BaseRouteHandler ..> Component        : "6. buildView — MVC View"
+BaseRouteHandler --> ConcreteObserver : "7. wires Observer to Model"
+
+ViewStrategy <|.. HTMLViewStrategy
+ViewStrategy <|.. JSONViewStrategy
+Controller --> ViewStrategy : "holds chosen strategy"
+Controller --> Component    : "11. delegates render"
+ViewStrategy ..> HttpResponse : "12. appends formatted output"
+
+Component <|.. Composite
+Component <|.. Leaf
+Composite *-- Component : "has children"
+
+Subject <|.. ConcreteSubject
+Observer <|.. ConcreteObserver
+ConcreteSubject --> Observer  : "8. notifyObservers"
+ConcreteObserver --> Component  : "9. adds dynamic view nodes"
+ConcreteObserver --> Controller : "10. calls renderView"
